@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GMS - 3D Virtual Microclimate World</title>
+<link rel="stylesheet" href="/static/css/main.css">
+<link rel="stylesheet" href="/static/css/map.css?v=forest6">
+</head>
+<body>{{ NAV|safe }}
+<div class="world" id="world">
+  <canvas id="worldCanvas"></canvas>
+  <div class="celestial sun-ui" id="sunUi"></div>
+  <div class="celestial moon-ui" id="moonUi"></div>
+  <div class="load-note" id="loadNote">Loading 3D microclimate world...</div>
+  <div class="alarm-vignette" id="alarmVignette"></div>
+  <div class="alarm-banner" id="alarmBanner">High instability detected</div>
+  <div class="hud">
+    <section class="panel hero">
+      <div class="eyebrow">Live 3D spatial-temporal simulation</div>
+      <h1>Virtual Microclimate World</h1>
+      <p>Orbit a forested terrain mesh with sensor towers, heat plumes, event zones, and propagation corridors.</p>
+      <div class="status-row">
+        <div class="stat"><div class="k">High</div><div class="v" id="highStat" style="color:var(--red)">0</div></div>
+        <div class="stat"><div class="k">Moderate</div><div class="v" id="modStat" style="color:var(--amber)">0</div></div>
+        <div class="stat"><div class="k">Noise</div><div class="v" id="noiseStat" style="color:var(--teal)">Off</div></div>
+        <div class="stat"><div class="k">Sky</div><div class="v" id="skyStat" style="color:var(--blue)">Dawn</div></div>
+      </div>
+    </section>
+
+    <section class="panel inspector">
+      <div class="eyebrow">Selected Sensor</div>
+      <div class="node-title" id="nodeName">N0</div>
+      <div class="status-badge stable" id="nodeStatus">Stable</div>
+      <div>GMS <b id="gmsVal">0.000</b></div>
+      <div class="meter"><span id="gmsMeter"></span></div>
+      <div>Temperature <b id="tempVal">--</b></div>
+      <div>Gradient <b id="gradVal">--</b></div>
+      <div>Momentum <b id="momVal">--</b></div>
+      <div>Z-score <b id="zVal">--</b></div>
+      <div class="event-chip" id="eventChip">No active event</div>
+    </section>
+
+    <section class="panel environment">
+      <div class="eyebrow">Environmental Control</div>
+      <div class="env-readout">
+        <span>Wind <b id="windRead">35%</b></span>
+        <span>Pressure <b id="pressureRead">101 kPa</b></span>
+      </div>
+      <label class="env-control">
+        <span>Wind speed</span>
+        <input type="range" id="windSpeed" min="0" max="100" value="35">
+      </label>
+      <label class="env-control">
+        <span>Wind direction</span>
+        <input type="range" id="windDir" min="0" max="359" value="60">
+      </label>
+      <label class="env-control">
+        <span>Pressure</span>
+        <input type="range" id="pressureCtrl" min="78" max="122" value="100">
+      </label>
+      <label class="env-control">
+        <span>Event intensity</span>
+        <input type="range" id="intensityCtrl" min="0" max="100" value="55">
+      </label>
+      <div class="env-readout">
+        <span>Heading <b id="dirRead">060 deg</b></span>
+        <span>Intensity <b id="intensityRead">55%</b></span>
+      </div>
+    </section>
+
+    <section class="panel legend">
+      <div class="eyebrow">World Layers</div>
+      <div class="leg-row"><span class="swatch" style="background:#1b4231"></span>Forest canopy and terrain mesh</div>
+      <div class="leg-row"><span class="swatch" style="background:#255c78"></span>Humid river corridor</div>
+      <div class="leg-row"><span class="swatch" style="background:#d29922"></span>Thermal plume volume</div>
+      <div class="leg-row"><span class="swatch" style="background:#f85149"></span>High instability alarm tower</div>
+    </section>
+
+    <section class="panel controls">
+      <button onclick="api('reset')" title="Reset">Reset</button>
+      <button id="playBtn" onclick="togglePlay()">Play</button>
+      <button onclick="api('step',{dir:-1})">Back</button>
+      <input type="range" id="timeline" min="0" max="119" value="0" oninput="api('jump',{t:+this.value})">
+      <button onclick="api('step',{dir:1})">Next</button>
+      <span class="time-pill" id="timePill">00:00</span>
+      <div class="mode">
+        <button id="modeWorld" class="on" onclick="setMode('world')">World</button>
+        <button id="modeHeat" onclick="setMode('heat')">Heat</button>
+        <button id="modeNet" onclick="setMode('network')">Network</button>
+      </div>
+      <button onclick="toggleNoise()" class="warn-btn" id="noiseBtn">Noise</button>
+      <button onclick="fitWorld()">Fit</button>
+    </section>
+
+    <section class="panel mini">
+      <canvas id="miniMap"></canvas>
+    </section>
+    <section class="panel timeline-panel">
+      <canvas id="networkTimeline"></canvas>
+    </section>
+    <div class="tip" id="tip"></div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module" src="/static/js/map.js?v=forest10"></script>
+</body>
+</html>

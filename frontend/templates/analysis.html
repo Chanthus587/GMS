@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GMS - Analysis</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/analysis.css?v=analysis5">
+</head>
+<body>
+{{ NAV|safe }}
+<main class="analysis-shell">
+  <section class="analysis-toolbar" aria-label="Analysis controls">
+    <div class="toolbar-group node-group">
+      <label for="analysis-node">Node</label>
+      <select id="analysis-node"></select>
+      <span class="time-chip">Time <b id="analysis-time">00:00</b></span>
+    </div>
+
+    <div class="toolbar-group">
+      <button type="button" data-api="play">PLAY</button>
+      <button type="button" data-api="pause">PAUSE</button>
+      <button type="button" data-api="reset">RESET</button>
+      <button type="button" data-api="step" data-dir="-1">BACK</button>
+      <button type="button" data-api="step" data-dir="1">NEXT</button>
+    </div>
+
+    <div class="toolbar-group event-controls">
+      <button type="button" class="event-a" data-event="0">Event A</button>
+      <button type="button" class="event-b" data-event="1">Event B</button>
+      <button type="button" class="event-c" data-event="2">Event C</button>
+      <button type="button" class="event-d" data-event="3">Event D</button>
+    </div>
+
+    <div class="toolbar-group">
+      <button type="button" class="warn-btn" data-noise="on">Noise ON</button>
+      <button type="button" data-noise="off">Noise OFF</button>
+    </div>
+  </section>
+
+  <section class="analysis-status" id="noise-info">
+    Noise active - compare GMS stability against threshold and z-score fluctuation.
+  </section>
+
+  <section class="summary-grid" aria-label="Current analysis summary">
+    <article class="summary-card">
+      <span>Selected Node</span>
+      <b id="sum-node">N0</b>
+      <small id="sum-node-state">waiting</small>
+    </article>
+    <article class="summary-card">
+      <span>GMS Score</span>
+      <b id="sum-gms">0.000</b>
+      <small id="sum-threshold">alpha 0.25 / beta 0.60</small>
+    </article>
+    <article class="summary-card">
+      <span>Network Peak</span>
+      <b id="sum-peak">N0</b>
+      <small id="sum-peak-val">0.000 GMS</small>
+    </article>
+    <article class="summary-card">
+      <span>Active Event</span>
+      <b id="sum-event">None</b>
+      <small id="sum-noise">clean data</small>
+    </article>
+  </section>
+
+  <section class="analysis-grid">
+    <div class="analysis-main">
+      <div class="sec">Fig 3 - GMS Component Decomposition</div>
+      <div class="component-grid">
+        <article class="chart-card">
+          <div class="chart-title blue">a) Spatial Gradient dT_i(t) = T_i - neighbor mean</div>
+          <div class="chart-wrap"><canvas id="gradient-chart"></canvas></div>
+        </article>
+        <article class="chart-card">
+          <div class="chart-title teal">b) Temporal Momentum M(t) = dT(t) - dT(t-1)</div>
+          <div class="chart-wrap"><canvas id="momentum-chart"></canvas></div>
+        </article>
+        <article class="chart-card">
+          <div class="chart-title amber">c) Duration / Persistence D_i(t)</div>
+          <div class="chart-wrap"><canvas id="duration-chart"></canvas></div>
+        </article>
+        <article class="chart-card">
+          <div class="chart-title purple">d) Neighbor Influence Score NIS_i(t)</div>
+          <div class="chart-wrap"><canvas id="nis-chart"></canvas></div>
+        </article>
+      </div>
+
+      <article class="chart-card composite-card">
+        <div class="chart-title red">e) GMS Composite Score S = w1|dT| + w2|M| + w3*NIS + w4*D</div>
+        <div class="chart-wrap composite-wrap"><canvas id="gms-chart"></canvas></div>
+      </article>
+
+      <div class="sec">Fig 4 - Spatio-Temporal GMS Heatmap</div>
+      <article class="heatmap-card">
+        <div class="heatmap-top">
+          <div>
+            <div class="heatmap-title">All 40 nodes across one day</div>
+            <div class="heatmap-sub">Click the field to inspect why that node/time is stable, moderate, or high.</div>
+          </div>
+          <div class="heatmap-controls">
+            <label for="heatmap-mode">View</label>
+            <select id="heatmap-mode">
+              <option value="flat">Smooth field</option>
+              <option value="relief">2.5D surface</option>
+            </select>
+          </div>
+        </div>
+        <canvas id="heatmap-canvas"></canvas>
+        <div class="heatmap-legend">
+          <span class="legend stable">Stable</span>
+          <span class="legend moderate">Moderate</span>
+          <span class="legend high">High</span>
+          <span class="legend current">Current time</span>
+          <span class="legend selected">Selected node/time</span>
+        </div>
+      </article>
+
+      <div class="sec">Fig 5 - Baseline vs GMS vs Z-Score Detection</div>
+      <div class="baseline-grid">
+        <article class="chart-card">
+          <div class="chart-title teal">Temperature vs absolute threshold (26.5 C)</div>
+          <div class="chart-wrap"><canvas id="temp-chart"></canvas></div>
+        </article>
+        <article class="chart-card">
+          <div class="chart-title purple">Z-Score anomaly |Z| > 1.2</div>
+          <div class="chart-wrap"><canvas id="z-chart"></canvas></div>
+        </article>
+        <article class="chart-card">
+          <div class="chart-title blue">GMS Score vs thresholds</div>
+          <div class="chart-wrap"><canvas id="gms-compare-chart"></canvas></div>
+        </article>
+      </div>
+    </div>
+
+    <aside class="analysis-side">
+      <div class="sec">Click Explanation</div>
+      <article class="insight-card" id="insight-card">
+        <div class="insight-kicker" id="insight-kicker">Select a heatmap cell or chart point</div>
+        <h2 id="insight-title">Waiting for live data</h2>
+        <p id="insight-text">The analysis panel will explain the selected graph position after the first frame arrives.</p>
+        <div class="insight-metrics">
+          <div><span>GMS</span><b id="ix-gms">--</b></div>
+          <div><span>Temp</span><b id="ix-temp">--</b></div>
+          <div><span>Gradient</span><b id="ix-grad">--</b></div>
+          <div><span>Momentum</span><b id="ix-mom">--</b></div>
+          <div><span>Duration</span><b id="ix-dur">--</b></div>
+          <div><span>NIS</span><b id="ix-nis">--</b></div>
+          <div><span>Z-Score</span><b id="ix-z">--</b></div>
+          <div><span>Label</span><b id="ix-label">--</b></div>
+        </div>
+      </article>
+
+      <div class="sec">Component Reading</div>
+      <article class="reading-card">
+        <div class="read-row"><span>Gradient</span><b id="read-gradient">--</b></div>
+        <div class="read-row"><span>Momentum</span><b id="read-momentum">--</b></div>
+        <div class="read-row"><span>Persistence</span><b id="read-duration">--</b></div>
+        <div class="read-row"><span>Neighbor Influence</span><b id="read-nis">--</b></div>
+      </article>
+
+      <div class="sec">Performance - GMS vs Baselines</div>
+      <section class="performance-grid" aria-label="Performance metrics">
+        <article class="perf-card"><span>Accuracy</span><b id="pa-g">--</b><small id="pa-z">Z: --</small><small id="pa-b">Base: --</small></article>
+        <article class="perf-card"><span>Precision</span><b id="pp-g">--</b><small id="pp-z">Z: --</small><small id="pp-b">Base: --</small></article>
+        <article class="perf-card"><span>Recall</span><b id="pr-g">--</b><small id="pr-z">Z: --</small><small id="pr-b">Base: --</small></article>
+        <article class="perf-card"><span>FAR</span><b id="pf-g">--</b><small id="pf-z">Z: --</small><small id="pf-b">Base: --</small></article>
+        <article class="perf-card"><span>F1 Score</span><b id="p1-g">--</b><small id="p1-z">Z: --</small><small id="p1-b">Base: --</small></article>
+      </section>
+    </aside>
+  </section>
+</main>
+
+<script src="/static/js/analysis.js?v=analysis5"></script>
+<script src="/static/js/realtime.js"></script>
+</body>
+</html>

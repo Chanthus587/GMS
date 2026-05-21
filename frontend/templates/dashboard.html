@@ -1,0 +1,179 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>GMS - Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/css/main.css">
+<link rel="stylesheet" href="/static/css/dashboard.css?v=iso4">
+</head><body>{{ NAV|safe }}<div class="body">
+
+<!-- LEFT SIDEBAR -->
+<div class="left">
+  <div class="sec">Simulation Controls</div>
+  <div style="display:flex;gap:5px;flex-wrap:wrap">
+    <button id="btn-play" onclick="togglePlay()">PLAY</button>
+    <button onclick="api('reset')">RESET</button>
+    <button onclick="api('step',{dir:-1})">Back</button>
+    <button onclick="api('step',{dir:1})">Next</button>
+    <button onclick="exportData()" style="width:100%;margin-top:6px">
+  Export CSV
+</button>
+<button onclick="fetch('/reset_logs',{method:'POST'}).then(()=>alert('Logs cleared'))">
+  Clear Logs
+</button>
+  </div>
+
+  <div class="ctrl"><label>Speed</label><input type="range" min="1" max="20" value="7" step="1" oninput="setSpd(this.value)" id="spsl"><span class="v" id="spv">x7</span></div>
+
+  <div class="sec">Noise Experiment</div>
+  <div class="toggle-wrap">
+    <button class="tgl" id="noise-tgl" onclick="toggleNoise()"></button>
+    <label onclick="toggleNoise()">Inject +/-0.5 C Noise</label>
+  </div>
+  <div class="noise-banner" id="noise-banner">Noise Active - GMS uses Duration+NIS to stay robust</div>
+
+  <div class="sec">GMS Weights</div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:6px 8px;font-size:10px;color:var(--purple);margin-bottom:2px">S = w1|dT| + w2|M| + w3*NIS + w4*D</div>
+  <div id="sw" class="sw"></div>
+  <div class="ctrl"><label style="color:var(--blue)">w1 Gradient</label><input type="range" min="0.05" max="0.70" step="0.01" value="0.35" id="sl-w1" oninput="upW('w1',this.value)"><span class="v" id="vl-w1">0.35</span></div>
+  <div class="ctrl"><label style="color:var(--teal)">w2 Momentum</label><input type="range" min="0.05" max="0.70" step="0.01" value="0.25" id="sl-w2" oninput="upW('w2',this.value)"><span class="v" id="vl-w2">0.25</span></div>
+  <div class="ctrl"><label style="color:var(--purple)">w3 NIS</label><input type="range" min="0.05" max="0.70" step="0.01" value="0.20" id="sl-w3" oninput="upW('w3',this.value)"><span class="v" id="vl-w3">0.20</span></div>
+  <div class="ctrl"><label style="color:var(--amber)">w4 Duration</label><input type="range" min="0.05" max="0.70" step="0.01" value="0.20" id="sl-w4" oninput="upW('w4',this.value)"><span class="v" id="vl-w4">0.20</span></div>
+
+  <div class="sec">Thresholds</div>
+  <div class="ctrl"><label style="color:var(--teal)">theta</label><input type="range" min="0.2" max="3.0" step="0.1" value="1.2" id="sl-th" oninput="upT('theta',this.value)"><span class="v" id="vl-th">1.2</span></div>
+  <div class="ctrl"><label style="color:var(--amber)">alpha Mod</label><input type="range" min="0.10" max="0.50" step="0.01" value="0.25" id="sl-al" oninput="upT('alpha',this.value)"><span class="v" id="vl-al">0.25</span></div>
+  <div class="ctrl"><label style="color:var(--red)">beta High</label><input type="range" min="0.40" max="0.90" step="0.01" value="0.60" id="sl-be" oninput="upT('beta',this.value)"><span class="v" id="vl-be">0.60</span></div>
+
+  <div class="sec">Node Inspector (N=40)</div>
+  <div class="ngrid" id="ngrid"></div>
+
+  <div class="sec" style="margin-top:4px">Trigger Events</div>
+  <button class="evbtn" style="color:#388BFD;border-color:rgba(56,139,253,.4)" onclick="api('trigger_event',{idx:0})">Event A - N0-N4</button>
+  <button class="evbtn" style="color:#3FB950;border-color:rgba(63,185,80,.4)"  onclick="api('trigger_event',{idx:1})">Event B - N15-N18</button>
+  <button class="evbtn" style="color:#D29922;border-color:rgba(210,153,34,.4)" onclick="api('trigger_event',{idx:2})">Event C - N8-N11</button>
+  <button class="evbtn" style="color:#BC8CFF;border-color:rgba(188,140,255,.4)" onclick="api('trigger_event',{idx:3})">Event D - N25-N28</button>
+  <div class="sec" style="margin-top:4px">Event Replay</div>
+  <div class="event-stack" id="eventCards"></div>
+</div>
+
+<!-- CENTRE -->
+<div class="centre">
+  <div class="mission-ribbon">
+    <div class="mission-title">
+      <div class="ey">Gradient-Momentum Command Surface</div>
+      <div class="name">Mission Dashboard</div>
+      <div class="sub">Live instability scoring, event playback, sensor telemetry, and baseline comparison in one operational view.</div>
+    </div>
+    <div class="mission-kpis">
+      <div class="kpi"><div class="label">Network Mean</div><div class="num" id="kpiMean" style="color:var(--blue)">0.000</div><div class="hint">GMS average</div></div>
+      <div class="kpi"><div class="label">Peak Node</div><div class="num" id="kpiPeak" style="color:var(--red)">N0</div><div class="hint" id="kpiPeakVal">0.000 GMS</div></div>
+      <div class="kpi"><div class="label">Active Event</div><div class="num" id="kpiEvent" style="color:var(--amber)">None</div><div class="hint">scenario state</div></div>
+      <div class="kpi"><div class="label">Noise</div><div class="num" id="kpiNoise" style="color:var(--teal)">Off</div><div class="hint">robustness test</div></div>
+    </div>
+    <div class="health-card">
+      <canvas id="healthRing"></canvas>
+      <div class="health-label">Health<b id="healthPct">100%</b></div>
+    </div>
+  </div>
+  <div class="alert-banner" id="alertBanner">High instability detected</div>
+  <div class="playbar">
+    <div class="tdisp" id="tdisp">00:00</div>
+    <input type="range" id="tl" min="0" max="119" value="0" oninput="api('jump',{t:+this.value})" style="flex:1">
+    <span style="font-size:10px;color:var(--fg2)">24h day cycle - SPACE=play - arrows=step - N=noise - 1-4=events</span>
+  </div>
+  <div class="mw" id="mw">
+    <canvas id="sc"></canvas>
+    <div class="mbdg">
+      <div id="ba" class="evb" style="color:#388BFD;border-color:rgba(56,139,253,.5);background:rgba(56,139,253,.1)">A</div>
+      <div id="bb" class="evb" style="color:#3FB950;border-color:rgba(63,185,80,.5);background:rgba(63,185,80,.1)">B</div>
+      <div id="bc" class="evb" style="color:#D29922;border-color:rgba(210,153,34,.5);background:rgba(210,153,34,.1)">C</div>
+      <div id="bd" class="evb" style="color:#BC8CFF;border-color:rgba(188,140,255,.5);background:rgba(188,140,255,.1)">D</div>
+    </div>
+    <div class="map-hud">
+      <div class="hud-tile"><div class="k">Mean GMS</div><div class="v" id="hud-mean" style="color:var(--blue)">0.000</div></div>
+      <div class="hud-tile"><div class="k">High</div><div class="v" id="hud-high" style="color:var(--red)">0</div></div>
+      <div class="hud-tile"><div class="k">Thermal Load</div><div class="v" id="hud-load" style="color:var(--amber)">0%</div></div>
+    </div>
+    <div class="tt" id="tt"></div>
+  </div>
+  <div class="risk-strip">
+    <canvas id="riskTimeline"></canvas>
+  </div>
+  <div class="charts">
+    <div class="cb"><div class="ct">GMS - N<span id="cn1">0</span> vs network mean</div><canvas id="gmsChart" width="400" height="150"></canvas></div>
+    <div class="cb"><div class="ct">Temperature - N<span id="cn2">0</span> vs abs baseline (26.5 C)</div><canvas id="tmpChart" width="400" height="150"></canvas></div>
+  </div>
+</div>
+
+<!-- RIGHT SIDEBAR -->
+<div class="right">
+  <div class="sec">Node Status</div>
+  <div class="status-box s-ok" id="sb">STABLE</div>
+  <div style="font-size:10px;color:var(--fg2);text-align:center;margin-top:3px" id="ss">N0 @ 00:00</div>
+
+  <div class="sec">Live Metrics - N<span id="mn">0</span></div>
+  <div class="mg">
+    <div class="mc"><div class="l">GMS</div><div class="v" id="m-gms" style="color:var(--blue)">0.000</div></div>
+    <div class="mc"><div class="l">Z-Score</div><div class="v" id="m-zs" style="color:var(--purple);font-size:16px">0.00</div></div>
+    <div class="mc"><div class="l">Gradient</div><div class="v" id="m-gr" style="color:var(--teal);font-size:16px">0.00 C</div></div>
+    <div class="mc"><div class="l">Momentum</div><div class="v" id="m-mo" style="color:var(--purple);font-size:16px">0.00 C</div></div>
+    <div class="mc"><div class="l">Duration</div><div class="v" id="m-du" style="color:var(--amber)">0.000</div></div>
+    <div class="mc"><div class="l">Temp C</div><div class="v" id="m-te" style="color:var(--fg2);font-size:16px">00.0 C</div></div>
+  </div>
+
+  <div class="sec">Selected Node Profile</div>
+  <div class="profile-panel">
+    <canvas id="profileSpark"></canvas>
+    <div class="profile-legend">
+      <span style="color:var(--blue)">GMS</span>
+      <span style="color:var(--teal)">Temp</span>
+      <span style="color:var(--amber)">Grad</span>
+      <span style="color:var(--purple)">Z-score</span>
+    </div>
+  </div>
+
+  <div class="sec">Heatmap (All Nodes x Day)</div>
+  <canvas id="hc"></canvas>
+
+  <div class="sec">Alert Log</div>
+  <div class="alog" id="alog" style="height:130px">
+    <div class="al-i">[SYS] GMS v2 online - N=40 nodes, 4 events.</div>
+    <div class="al-i">[SYS] Press PLAY or trigger an event.</div>
+  </div>
+
+  <div class="sec">Performance: GMS vs 3 Baselines</div>
+  <table class="pt">
+    <tr><th>Metric</th><th>Threshold</th><th>Z-Score</th><th>GMS</th></tr>
+    <tr><td class="lbl">Accuracy</td><td class="bv" id="pa-b">--</td><td class="zv" id="pa-z">--</td><td class="gv" id="pa-g">--</td></tr>
+    <tr><td class="lbl">Precision</td><td class="bv" id="pp-b">--</td><td class="zv" id="pp-z">--</td><td class="gv" id="pp-g">--</td></tr>
+    <tr><td class="lbl">Recall</td><td class="bv" id="pr-b">--</td><td class="zv" id="pr-z">--</td><td class="gv" id="pr-g">--</td></tr>
+    <tr><td class="lbl">FAR</td><td class="bv" id="pf-b">--</td><td class="zv" id="pf-z">--</td><td class="gv" id="pf-g">--</td></tr>
+    <tr><td class="lbl">F1</td><td class="bv" id="p1-b">--</td><td class="zv" id="p1-z">--</td><td class="gv" id="p1-g">--</td></tr>
+  </table>
+  <div style="font-size:9px;color:var(--fg3);margin-top:3px">Thresh - Z-Score (purple) - GMS proposed (green)</div>
+
+  <div class="sec" style="margin-top:10px">Optimization Advantage</div>
+  <div class="opt-lens">
+    <canvas id="optLens"></canvas>
+    <div class="opt-score">
+      <span>GMS Edge</span>
+      <b id="opt-edge">+0.0</b>
+    </div>
+    <div class="opt-row">
+      <div class="opt-row-top"><span>Accuracy</span><b id="opt-acc-val">--</b></div>
+      <div class="opt-meter"><i id="opt-acc-ref"></i><em id="opt-acc-gms"></em></div>
+    </div>
+    <div class="opt-row">
+      <div class="opt-row-top"><span>F1 Score</span><b id="opt-f1-val">--</b></div>
+      <div class="opt-meter"><i id="opt-f1-ref"></i><em id="opt-f1-gms"></em></div>
+    </div>
+    <div class="opt-row">
+      <div class="opt-row-top"><span>FAR Saved</span><b id="opt-far-val">--</b></div>
+      <div class="opt-meter"><i id="opt-far-ref"></i><em id="opt-far-gms"></em></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="/static/js/dashboard.js?v=iso4"></script>
+<script src="/static/js/realtime.js"></script>
+</body></html>

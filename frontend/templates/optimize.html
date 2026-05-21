@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GMS - Optimizer</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/optimize.css?v=opt6">
+</head>
+<body>
+{{ NAV|safe }}
+<div class="opt-body">
+  <div class="opt-left">
+    <div class="sec">Optimization Settings</div>
+
+    <div class="opt-control">
+      <label class="opt-label">Target Recall (Max)</label>
+      <input type="range" min="0.01" max="0.50" step="0.01" value="0.10" id="opt-recall">
+      <div class="inline-row">
+        <span>Conservative</span>
+        <span class="opt-value" id="opt-recall-val">10%</span>
+      </div>
+    </div>
+
+    <div class="opt-control">
+      <label class="opt-label">Target False Positive Rate (Max)</label>
+      <input type="range" min="0.01" max="0.20" step="0.01" value="0.02" id="opt-fp">
+      <div class="inline-row">
+        <span>Strict</span>
+        <span class="opt-value" id="opt-fp-val">2%</span>
+      </div>
+    </div>
+
+    <div class="opt-control">
+      <label class="opt-label">Iterations</label>
+      <input class="opt-input" type="number" min="5" max="500" step="5" value="50" id="opt-iter">
+    </div>
+
+    <div class="opt-control">
+      <label class="opt-label">Random Seed</label>
+      <input class="opt-input" type="number" value="42" id="opt-seed">
+    </div>
+
+    <div class="opt-status" id="opt-status">Ready to optimize</div>
+
+    <div class="opt-actions">
+      <button class="opt-btn pri" onclick="runOptimize()" id="btn-opt-start">START OPTIMIZATION</button>
+      <button class="opt-btn" onclick="cancelOptimize()" id="btn-opt-cancel" hidden>CANCEL</button>
+    </div>
+
+    <div class="sec">AI Alert Tuning</div>
+    <div class="opt-control">
+      <label class="opt-label">Minimum Recall</label>
+      <input type="range" min="0.05" max="0.80" step="0.05" value="0.25" id="alert-min-recall">
+      <div class="inline-row">
+        <span>Do not miss events</span>
+        <span class="opt-value" id="alert-min-recall-val">25%</span>
+      </div>
+    </div>
+    <div class="opt-control">
+      <label class="opt-label">Max False Alarm Rate</label>
+      <input type="range" min="0.005" max="0.20" step="0.005" value="0.02" id="alert-target-far">
+      <div class="inline-row">
+        <span>Keep quiet</span>
+        <span class="opt-value" id="alert-target-far-val">2.0%</span>
+      </div>
+    </div>
+    <button class="opt-btn full-btn pri" onclick="runAlertTune()" id="btn-alert-tune">TUNE ALERT POLICY</button>
+    <button class="opt-btn full-btn" onclick="applyAlertTune()" id="btn-alert-apply" hidden>APPLY ALERT POLICY</button>
+
+    <div class="sec">Quick Presets</div>
+    <button class="opt-btn full-btn" onclick="setPreset('aggressive')">Aggressive (&lt;10% recall)</button>
+    <button class="opt-btn full-btn" onclick="setPreset('balanced')">Balanced (~30% recall)</button>
+    <button class="opt-btn full-btn" onclick="setPreset('sensitive')">Sensitive (~70% recall)</button>
+  </div>
+
+  <div class="opt-centre">
+    <div class="sec">Optimization Progress</div>
+
+    <div class="opt-progress">
+      <div class="opt-progress-bar" id="opt-progress-bar"></div>
+    </div>
+    <div class="inline-row">
+      <span id="opt-progress-iter">0 / 50 iterations</span>
+      <span id="opt-progress-time">--:--</span>
+    </div>
+
+    <div class="opt-visual-grid">
+      <div class="opt-card">
+        <div class="opt-viz-head"><span>Search Improvement</span><b id="viz-best-loss">best --</b></div>
+        <canvas class="opt-canvas" id="opt-convergence"></canvas>
+        <div class="opt-readout">
+          <div><span>Evaluations</span><b id="viz-evals">--</b></div>
+          <div><span>Best F1</span><b id="viz-f1">--</b></div>
+          <div><span>False Alarm</span><b id="viz-far">--</b></div>
+        </div>
+      </div>
+
+      <div class="opt-card">
+        <div class="opt-viz-head"><span>Parameter Mix</span><b id="viz-window">window --</b></div>
+        <canvas class="opt-canvas" id="opt-params"></canvas>
+      </div>
+    </div>
+
+    <div class="opt-card opt-metric-card">
+      <div class="opt-viz-head"><span>Optimized Detection Profile</span><b id="viz-profile">waiting</b></div>
+      <div class="opt-metric-row"><span>Accuracy</span><div class="opt-track"><i id="bar-acc"></i></div><b id="bar-acc-val">--</b></div>
+      <div class="opt-metric-row"><span>Precision</span><div class="opt-track"><i id="bar-prec"></i></div><b id="bar-prec-val">--</b></div>
+      <div class="opt-metric-row"><span>Recall</span><div class="opt-track"><i id="bar-rec"></i></div><b id="bar-rec-val">--</b></div>
+      <div class="opt-metric-row"><span>Low FAR</span><div class="opt-track warn"><i id="bar-far"></i></div><b id="bar-far-val">--</b></div>
+    </div>
+
+    <div class="opt-card" id="opt-results-card" hidden>
+      <div class="info-title blue">OPTIMIZATION COMPLETE</div>
+      <div class="opt-results">
+        <div class="opt-result-card"><div class="opt-result-label">Accuracy</div><div class="opt-result-value good" id="res-acc">-</div></div>
+        <div class="opt-result-card"><div class="opt-result-label">Precision</div><div class="opt-result-value good" id="res-prec">-</div></div>
+        <div class="opt-result-card"><div class="opt-result-label">Recall</div><div class="opt-result-value" id="res-recall">-</div></div>
+        <div class="opt-result-card"><div class="opt-result-label">False Alarm Rate</div><div class="opt-result-value" id="res-far">-</div></div>
+      </div>
+      <div class="opt-actions">
+        <button class="opt-btn sec apply-btn" onclick="applyOptimizedParams()">APPLY TO ENGINE</button>
+      </div>
+    </div>
+
+    <div class="sec">Best Parameters Found</div>
+    <table class="opt-table">
+      <tr><th>Parameter</th><th>Value</th></tr>
+      <tr><td class="param-name">w1 (Gradient)</td><td class="param-value" id="p-w1">-</td></tr>
+      <tr><td class="param-name">w2 (Momentum)</td><td class="param-value" id="p-w2">-</td></tr>
+      <tr><td class="param-name">w3 (NIS)</td><td class="param-value" id="p-w3">-</td></tr>
+      <tr><td class="param-name">w4 (Duration)</td><td class="param-value" id="p-w4">-</td></tr>
+      <tr><td class="param-name">&theta; (Theta)</td><td class="param-value" id="p-theta">-</td></tr>
+      <tr><td class="param-name">&alpha; (Mod Threshold)</td><td class="param-value" id="p-alpha">-</td></tr>
+      <tr><td class="param-name">&beta; (High Threshold)</td><td class="param-value" id="p-beta">-</td></tr>
+      <tr><td class="param-name">Hysteresis Margin</td><td class="param-value" id="p-hyst">-</td></tr>
+      <tr><td class="param-name">Alert Persistence</td><td class="param-value" id="p-persist">-</td></tr>
+      <tr><td class="param-name">Window</td><td class="param-value" id="p-window">-</td></tr>
+    </table>
+  </div>
+
+  <div class="opt-right">
+    <div class="sec">Optimizer Thinking</div>
+    <div class="think-card" id="think-card">
+      <div class="think-head">
+        <div class="think-title">Search Trace</div>
+        <div class="think-state"><span class="think-dot"></span><span id="think-state">idle</span></div>
+      </div>
+      <div class="think-stream" id="think-stream">
+        <div class="think-line active">Ready to inspect targets, test candidate weights, and explain the selected parameters.</div>
+      </div>
+    </div>
+
+    <div class="sec">Aggressive Mode (Default)</div>
+    <div class="opt-copy">
+      <p><strong>Target:</strong> Recall &lt; 10%</p>
+      <p><strong>Goal:</strong> Only alert when very confident</p>
+      <p><strong>Result:</strong> High accuracy, minimal false alarms, fewer detections</p>
+    </div>
+
+    <div class="opt-card opt-info-card blue">
+      <div class="info-title blue">How It Works</div>
+      <p>The optimizer searches weights and thresholds that maximize:</p>
+      <ul>
+        <li>Accuracy</li>
+        <li>Target recall behavior</li>
+        <li>Minimal false alarms</li>
+      </ul>
+    </div>
+
+    <div class="opt-card opt-info-card amber" id="alert-ai-card">
+      <div class="info-title amber">AI Alert Tuning</div>
+      <p id="alert-ai-summary">Tune alpha, beta, hysteresis margin, and persistence frames to reduce false alerts while preserving event recall.</p>
+    </div>
+
+    <div class="opt-card opt-info-card amber">
+      <div class="info-title amber">Note</div>
+      <p>Optimization runs on simulated data. Results represent best parameters for this scenario.</p>
+    </div>
+
+    <div class="sec">Presets</div>
+    <div class="preset-copy">
+      <div><strong class="info-title blue">Aggressive</strong><br>Recall &lt; 10%, FAR &lt; 2%</div>
+      <div><strong class="info-title blue">Balanced</strong><br>Recall ~30%, FAR ~5%</div>
+      <div><strong class="info-title amber">Sensitive</strong><br>Recall ~70%, FAR ~10%</div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/realtime.js"></script>
+<script src="/static/js/optimize.js?v=opt6"></script>
+</body>
+</html>

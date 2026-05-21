@@ -33,7 +33,9 @@ The composite GMS score classifies each sensor location into three stability sta
 gms_project/
 ├── app.py                    # Flask web interface (Mission Control)
 ├── main.py                   # CLI entry point
-├── config.py                 # Central configuration hub
+├── backend/                  # Web backend: engine, routes, optimizer
+├── frontend/                 # Web templates and static assets
+├── config/                   # Configuration package
 ├── requirements.txt          # Python dependencies
 │
 ├── core/
@@ -114,7 +116,8 @@ python gui_mission_control.py
 
 ## 🔧 Configuration
 
-Edit `config.py` to customize:
+Edit `config/settings.py` for the web app and 40-node Mission Control defaults.
+The `config` package also exposes legacy names used by the CLI/core pipeline.
 
 ```python
 # Network topology
@@ -186,11 +189,7 @@ Weighted combination normalized to [0, 1] range.
 ## 🧪 Testing
 
 ```bash
-# Run test suite
-python -m pytest tests/test_gms.py -v
-
-# Generate test report with coverage
-pytest tests/test_gms.py --cov=core --cov=data
+python tests/test_gms.py
 ```
 
 ## 📊 Data Sources
@@ -205,6 +204,81 @@ pytest tests/test_gms.py --cov=core --cov=data
 - Relative humidity at 2 meters (RH2M)
 - Daily aggregated values
 - Geographic coordinates (latitude/longitude) configurable
+
+## 🤖 Hyperparameter Optimizer
+
+The optimizer can tune component weights, thresholds, and the duration window from the web UI or Flask API.
+
+```bash
+# Start web server
+python app.py
+
+# Call optimization endpoint
+curl -X POST http://localhost:5000/api/optimize \
+  -H "Content-Type: application/json" \
+  -d '{"iterations": 50, "seed": 42, "target_recall": 0.70, "target_fp_rate": 0.05}'
+
+# Apply optimized parameters
+curl -X POST http://localhost:5000/api/apply_optimized_params \
+  -H "Content-Type: application/json" \
+  -d '{"params": {"w1": 0.3842, "w2": 0.2156, "w3": 0.2001, "w4": 0.1901, ...}}'
+```
+
+### Optimization Objective
+
+The optimizer minimizes a weighted loss function:
+
+```
+Loss = -λ_acc·Accuracy + λ_recall·max(0, Recall - Target) + λ_fp·FAR
+```
+
+Where:
+- **λ_acc = 1.0** — Maximize accuracy
+- **λ_recall = 0.5** — Penalize high recall (more conservative)
+- **λ_fp = 2.0** — Heavily penalize false positive rate
+
+### Performance Metrics Explained
+
+| Metric | Definition | Target |
+|--------|-----------|--------|
+| **Accuracy** | (TP+TN) / Total | Maximize |
+| **Precision** | TP / (TP+FP) | High (fewer false alarms) |
+| **Recall** | TP / (TP+FN) | Lower = more conservative |
+| **FAR** | FP / (FP+TN) | Minimize |
+| **F1-Score** | 2·Precision·Recall / (Precision+Recall) | Balance |
+
+### Example Output
+
+```
+======================================================================
+OPTIMIZATION RESULTS
+======================================================================
+
+📊 BEST PARAMETERS FOUND:
+  Weights:
+    w1 (Gradient)    : 0.3842
+    w2 (Momentum)    : 0.2156
+    w3 (NIS)         : 0.2001
+    w4 (Duration)    : 0.1901
+  Thresholds:
+    theta            : 1.1234
+    alpha (Mod)      : 0.2891
+    beta  (High)     : 0.7234
+    window           : 8
+
+📈 PERFORMANCE METRICS:
+  Accuracy  : 0.8934 ✓
+  Precision : 0.8712
+  Recall    : 0.6543 (Lower = fewer alarms)
+  FAR       : 0.0234 (Lower = fewer false alarms)
+  F1-Score  : 0.7523
+
+🎯 DETECTION COUNTS:
+  True Positives  (TP) : 485
+  False Positives (FP) : 21  ← False alarms
+  False Negatives (FN) : 251
+  True Negatives  (TN) : 3243
+```
 
 ## 📈 Output Files
 

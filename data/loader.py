@@ -66,6 +66,18 @@ class SensorEnvironment:
             for i in range(self.N)
         }
 
+    @classmethod
+    def simulated(cls, N=None, T=None, seed=None, grid_size=None, radius=None):
+        """Build a configurable simulated environment for tests and tooling."""
+        return SimulatedData(
+            n_nodes=N,
+            time_steps=T,
+            seed=seed,
+            grid_size=grid_size,
+            radius=radius,
+            quiet=True,
+        )
+
     def summary(self):
         edges = sum(len(v) for v in self.adj.values()) // 2
         print(f"  Nodes        : {self.N}")
@@ -90,17 +102,29 @@ class SimulatedData(SensorEnvironment):
     nodes are pinned so they match the cluster layout used in the paper.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        n_nodes=None,
+        time_steps=None,
+        seed=None,
+        grid_size=None,
+        radius=None,
+        quiet=False,
+    ):
         cfg  = config.NETWORK
-        np.random.seed(cfg['random_seed'])
+        n_nodes = int(n_nodes if n_nodes is not None else cfg['n_nodes'])
+        time_steps = int(time_steps if time_steps is not None else cfg['time_steps'])
+        grid_size = float(grid_size if grid_size is not None else cfg['grid_size'])
+        radius = float(radius if radius is not None else cfg['neighbor_radius'])
+        np.random.seed(int(seed if seed is not None else cfg['random_seed']))
 
-        pos   = self._place_nodes(cfg['n_nodes'], cfg['grid_size'])
-        Temp, Humid = self._simulate(pos, cfg['n_nodes'],
-                                     cfg['time_steps'], cfg['grid_size'])
+        pos   = self._place_nodes(n_nodes, grid_size)
+        Temp, Humid = self._simulate(pos, n_nodes, time_steps, grid_size)
 
-        super().__init__(pos, Temp, Humid, cfg['neighbor_radius'])
-        print("[SimulatedData] Environment ready.")
-        self.summary()
+        super().__init__(pos, Temp, Humid, radius)
+        if not quiet:
+            print("[SimulatedData] Environment ready.")
+            self.summary()
 
     # ── helpers ──────────────────────────────────────────────────────────────
 
@@ -130,7 +154,12 @@ class SimulatedData(SensorEnvironment):
         # Inject controlled instability events
         for ev in config.EVENTS:
             ns, ts, te, dT = ev['nodes'], ev['t_start'], ev['t_end'], ev['delta_T']
+            if ts >= T:
+                continue
+            te = min(te, T)
             dur = te - ts
+            if dur <= 0:
+                continue
             for i in ns:
                 if i >= N:
                     continue

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}GMS - Alerts{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="/static/css/alerts.css">
+{% endblock %}
+
+{% block body %}
+<div class="page">
+  <div class="sg">
+    <div class="mc"><div class="l">Alerts Today</div><div class="v metric-total" id="alertsToday">0</div></div>
+    <div class="mc"><div class="l">Critical Count</div><div class="v metric-high" id="criticalCount">0</div></div>
+    <div class="mc"><div class="l">Most Unstable</div><div class="v metric-moderate" id="mostUnstable">N0</div></div>
+    <div class="mc"><div class="l">Avg Response</div><div class="v metric-ack" id="avgResponse">0f</div></div>
+    <div class="mc"><div class="l">False Alert Est.</div><div class="v metric-high" id="falseEstimate">0%</div></div>
+    <div class="mc"><div class="l">Open Alerts</div><div class="v metric-total" id="openAlerts">0</div></div>
+  </div>
+  <div class="trend-card">
+    <div class="trend-head"><span>Alert trend over time</span><span id="trendNote">No alerts yet</span></div>
+    <canvas id="alertTrend" width="900" height="64"></canvas>
+  </div>
+
+  <div class="policy-card">
+    <div>
+      <div class="policy-title">Hysteresis guard</div>
+      <div class="policy-copy" id="hysteresisText">High enters at beta and releases below beta - margin.</div>
+    </div>
+    <div class="policy-control">
+      <label for="hysteresisMargin">Margin</label>
+      <input id="hysteresisMargin" type="range" min="0" max="0.20" step="0.01" value="0.05">
+      <b id="hysteresisValue">0.05</b>
+    </div>
+    <div class="policy-stat">
+      <span>Flickers Suppressed</span>
+      <b id="suppressedFlickers">0</b>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="filters">
+      <span class="filter-label">Level</span>
+      <button class="fb on-all" id="fb-level-all" data-level="all">All</button>
+      <button class="fb" id="fb-level-danger" data-level="danger">High</button>
+      <button class="fb" id="fb-level-warn" data-level="warn">Moderate</button>
+      <button class="fb" id="fb-level-ok" data-level="ok">Recovered</button>
+      <button class="fb" id="fb-level-info" data-level="info">System</button>
+
+      <span class="filter-label spaced">State</span>
+      <button class="fb on-st" id="fb-status-open" data-status="open">Open</button>
+      <button class="fb" id="fb-status-active" data-status="active">Active</button>
+      <button class="fb" id="fb-status-acknowledged" data-status="acknowledged">Ack</button>
+      <button class="fb" id="fb-status-resolved" data-status="resolved">Resolved</button>
+      <button class="fb" id="fb-status-all" data-status="all">All</button>
+    </div>
+
+    <div class="search">
+      <input id="q" placeholder="Search node, message, or event">
+      <select id="sortOrder" aria-label="Sort alerts">
+        <option value="newest">Newest</option>
+        <option value="oldest">Oldest</option>
+      </select>
+      <div class="top-actions">
+        <button data-api="play">PLAY</button>
+        <button data-api="pause">PAUSE</button>
+        <button data-export="csv">CSV</button>
+        <button data-export="pdf">PDF</button>
+        <button class="dng" id="clearAlerts">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar single">
+    <div class="filters">
+      <button class="event-a" data-api="trigger_event" data-body='{"idx":0}'>Event A</button>
+      <button class="event-b" data-api="trigger_event" data-body='{"idx":1}'>Event B</button>
+      <button class="event-c" data-api="trigger_event" data-body='{"idx":2}'>Event C</button>
+      <button class="event-d" data-api="trigger_event" data-body='{"idx":3}'>Event D</button>
+      <button class="warn-btn" data-api="toggle_noise" data-body='{"on":true}'>Noise On</button>
+      <button data-api="toggle_noise" data-body='{"on":false}'>Noise Off</button>
+    </div>
+  </div>
+
+  <div class="alert-list" id="alf">
+    <div class="empty">Waiting - press PLAY or trigger an event</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/js/alerts.js"></script>
+{% endblock %}

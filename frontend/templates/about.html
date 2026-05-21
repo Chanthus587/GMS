@@ -1,0 +1,86 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>GMS — About</title>
+<link rel="stylesheet" href="/static/css/main.css">
+<style>
+.page{padding:24px 28px;max-width:860px;margin:0 auto}
+.eq-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:16px 20px;margin-bottom:14px}
+.eq{font-size:15px;color:var(--purple);font-weight:700;margin:6px 0}
+.eq-d{font-size:11px;color:var(--fg2);line-height:1.8;margin-top:6px}
+.cg{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.cn{font-size:11px;font-weight:700;margin-bottom:5px}
+.ceq{font-size:13px;color:var(--purple);margin-bottom:5px;font-weight:700}
+.cd{font-size:10px;color:var(--fg2);line-height:1.7}
+.wt{width:100%;border-collapse:collapse;font-size:11px}
+.wt th{text-align:left;color:var(--fg2);font-size:9px;text-transform:uppercase;letter-spacing:.07em;padding:4px 8px;border-bottom:1px solid var(--border)}
+.wt td{padding:5px 8px;border-bottom:1px solid rgba(48,54,61,.5)}
+.wt tr:last-child td{border-bottom:none}
+.wk{color:var(--purple);font-weight:700}
+.ab{font-size:12px;color:var(--fg2);line-height:1.9;background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:16px 20px;margin-bottom:14px;border-left:3px solid var(--blue)}
+.contribution{background:rgba(56,139,253,.06);border:1px solid rgba(56,139,253,.25);border-radius:var(--rl);padding:14px 18px;margin-bottom:14px;font-size:11px;color:var(--fg2);line-height:1.9}
+.contribution strong{color:var(--blue)}
+</style>
+</head><body>{{ NAV|safe }}<div class="page">
+<div style="margin-bottom:20px">
+  <div style="font-size:18px;font-weight:700;color:var(--fg);margin-bottom:4px">Gradient–Momentum Based Microclimate Instability Detection</div>
+  <div style="font-size:12px;color:var(--fg2)">Using Spatial–Temporal Sensor Networks</div>
+  <div style="font-size:11px;color:var(--fg3);margin-top:6px">IEEE Conference Paper · Chanthu S, Manpreet Kaur · Lovely Professional University</div>
+</div>
+
+<div class="ab">This paper proposes a lightweight and interpretable framework for detecting pre-event microclimate instability using distributed sensor networks. Unlike conventional approaches relying on absolute thresholds or late-stage event detection, the proposed GMS method analyzes spatial gradients, temporal momentum, duration, and neighbor influence — achieving higher accuracy and lower false alarm rates compared to both threshold-based and Z-score statistical baselines. The system is extended to N=40 nodes to validate scalability, maintaining stable O(N) complexity.</div>
+
+<div class="contribution">
+  <strong>Framework contribution:</strong> A real-time simulation platform for analyzing microclimate instability in WSNs, supporting interactive experimentation with weight sensitivity, noise robustness testing, and multi-baseline comparison — all demonstrated live in this dashboard.
+</div>
+
+<div class="sec">GMS Unified Score (Eq. 7) — core novelty</div>
+<div class="eq-card">
+  <div class="eq">S_i(t) = w₁·|ΔT_i| + w₂·|M_i| + w₃·NIS_i + w₄·D_i</div>
+  <div class="eq-d">
+    <b style="color:var(--fg)">Default weights:</b> w₁=0.35 · w₂=0.25 · w₃=0.20 · w₄=0.20 &nbsp;|&nbsp;
+    <b style="color:var(--fg)">Classification:</b> &lt;0.25 Stable · 0.25–0.60 Mod · ≥0.60 High<br>
+    <b style="color:var(--fg)">Complexity:</b> O(N·k)≈O(N) · Memory: O(k)/node · N=40 nodes validated<br>
+    <b style="color:var(--fg)">Baselines compared:</b> Absolute threshold (T>26.5°C) · Z-score (|Z|>1.2) · Proposed GMS
+  </div>
+</div>
+
+<div class="sec">Four Core Components</div>
+<div class="cg">
+  <div class="cc"><div class="cn" style="color:var(--blue)">① Spatial Gradient  <span style="font-size:9px;color:var(--fg3)">[Eq. 2–3]</span></div><div class="ceq">ΔT_ij(t) = T_i(t) − T_j(t)</div><div class="cd">Relative temperature difference between neighbors. Approximates ∇T(x,t)·d_ij. Detects localized variation invisible to absolute-value methods.</div></div>
+  <div class="cc"><div class="cn" style="color:var(--teal)">② Temporal Momentum  <span style="font-size:9px;color:var(--fg3)">[Eq. 4]</span></div><div class="ceq">M_ij(t) = ΔT(t) − ΔT(t−1)</div><div class="cd">First-order temporal difference ≈ d(ΔT)/dt. Positive momentum = increasing instability → enables early detection before threshold crossings.</div></div>
+  <div class="cc"><div class="cn" style="color:var(--amber)">③ Duration / Persistence  <span style="font-size:9px;color:var(--fg3)">[Eq. 5]</span></div><div class="ceq">D_i: counter if |ΔT| &gt; θ</div><div class="cd">Low-pass temporal filter. Transient noise ε(t) dissipates; true instability persists. Demonstrated by noise experiment (toggle on Dashboard).</div></div>
+  <div class="cc"><div class="cn" style="color:var(--purple)">④ Neighbor Influence Score  <span style="font-size:9px;color:var(--fg3)">[Eq. 6]</span></div><div class="ceq">NIS_i = (1/|N(i)|) Σ ΔT_ij</div><div class="cd">Mean gradient over neighbors N(i). Models spatial propagation. A node becomes influenced when its neighbors are unstable — captures spread dynamics.</div></div>
+</div>
+
+<div class="sec">Scalability & Robustness Notes</div>
+<div class="eq-card" style="font-size:11px;color:var(--fg2);line-height:1.9">
+  <b style="color:var(--fg)">Scalability:</b> Network extended from 12 to 40 nodes with randomized placement. Performance remains stable, supporting the O(N·k)≈O(N) complexity claim.<br>
+  <b style="color:var(--fg)">Noise robustness:</b> Random noise ±0.5°C injected (toggle on Dashboard). GMS remains stable due to Duration (persistence filter) and NIS (spatial averaging). Absolute threshold exhibits increased false alarms under noise.<br>
+  <b style="color:var(--fg)">Weight sensitivity:</b> Use the Dashboard sliders to vary w₁–w₄. Performance remains stable across weight variations, demonstrating model robustness.<br>
+  <b style="color:var(--fg)">Z-score baseline:</b> Per-node statistical anomaly detector |Z|>1.2. Compared alongside absolute threshold in all metric panels.
+</div>
+
+<div class="sec">Parameter Reference</div>
+<div class="eq-card">
+  <table class="wt">
+    <tr><th>Symbol</th><th>Component</th><th>Default</th><th>Role</th></tr>
+    <tr><td class="wk" style="color:var(--blue)">w₁</td><td>Spatial Gradient |ΔT|</td><td>0.35</td><td>Primary instability signal</td></tr>
+    <tr><td class="wk" style="color:var(--teal)">w₂</td><td>Temporal Momentum |M|</td><td>0.25</td><td>Early trend detection</td></tr>
+    <tr><td class="wk" style="color:var(--purple)">w₃</td><td>Neighbor Influence NIS</td><td>0.20</td><td>Propagation modeling</td></tr>
+    <tr><td class="wk" style="color:var(--amber)">w₄</td><td>Duration D</td><td>0.20</td><td>Noise filtering</td></tr>
+    <tr><td class="wk" style="color:var(--amber)">θ</td><td>Gradient threshold</td><td>1.2 °C</td><td>Minimum gradient for Duration counter</td></tr>
+    <tr><td class="wk" style="color:var(--amber)">α</td><td>Mod. threshold</td><td>0.25</td><td>GMS ≥ α → Moderately Unstable</td></tr>
+    <tr><td class="wk" style="color:var(--red)">β</td><td>High threshold</td><td>0.60</td><td>GMS ≥ β → Highly Unstable</td></tr>
+    <tr><td class="wk" style="color:var(--purple)">Z_thr</td><td>Z-score threshold</td><td>1.2 σ</td><td>Statistical anomaly baseline</td></tr>
+  </table>
+</div>
+
+<div class="sec">Dataset</div>
+<div class="eq-card" style="font-size:11px;color:var(--fg2);line-height:1.9">
+  <b style="color:var(--fg)">Source:</b> NASA POWER (T2M + RH2M) &nbsp;|&nbsp;
+  <b style="color:var(--fg)">Network:</b> N=40 nodes · 10×10 km · radius=2.8 km · one-day cycle (120 samples)<br>
+  <b style="color:var(--fg)">Events:</b> A — N0–N4 · 04:00–11:00 · ΔT=8°C &nbsp;|&nbsp; B — N15–N18 · 07:00–14:00 · ΔT=6°C &nbsp;|&nbsp; C — N8–N11 · 10:00–18:00 · ΔT=7°C &nbsp;|&nbsp; D — N25–N28 · 13:00–20:00 · ΔT=5.5°C
+</div>
+</div>
+<script src="/static/js/realtime.js"></script>
+<script>function onFrame(d){}function onAlert(m){}</script>
+</body></html>

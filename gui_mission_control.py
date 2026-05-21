@@ -68,6 +68,11 @@ NODE_HIGH    = "#F85149"
 
 EVENT_COLS = [ACCENT_BLUE, ACCENT_TEAL, ACCENT_AMBER]
 
+def time_label(t, total_steps=120):
+    t = max(0, min(int(t), int(total_steps) - 1))
+    minutes = int(round((t / max(1, int(total_steps))) * 24 * 60)) % (24 * 60)
+    return f"{minutes // 60:02d}:{minutes % 60:02d}"
+
 # ══════════════════════════════════════════════════════════════════════
 #  SIMULATION ENGINE  (self-contained, no external config needed)
 # ══════════════════════════════════════════════════════════════════════
@@ -295,7 +300,7 @@ class MissionControlGUI:
         speed_sl.pack(side="left", padx=2)
 
         # Time display
-        self.lbl_time = tk.Label(bar, text="t = 000",
+        self.lbl_time = tk.Label(bar, text="00:00",
                                   bg=BG_PANEL, fg=ACCENT_BLUE,
                                   font=("Courier New", 12, "bold"))
         self.lbl_time.pack(side="right", padx=24)
@@ -560,7 +565,7 @@ class MissionControlGUI:
         self._update_metrics(t)
         self._update_alerts(t)
         self._update_performance()
-        self.lbl_time.config(text=f"t = {t:03d}")
+        self.lbl_time.config(text=time_label(t, self.engine.T_STEPS))
         self.t_var.set(t)
 
     # ── SENSOR MAP ───────────────────────────────────────────────────
@@ -680,7 +685,7 @@ class MissionControlGUI:
         ax.set_ylim(-0.4, eng.GRID+0.4)
         ax.set_xlabel("X position (km)", fontsize=8)
         ax.set_ylabel("Y position (km)", fontsize=8)
-        ax.set_title(f"Sensor Network  ·  t = {t:03d}  ·  "
+        ax.set_title(f"Sensor Network  ·  {time_label(t, eng.T_STEPS)}  ·  "
                      f"Node N{sn} selected",
                      color=FG_PRIMARY, fontsize=9,
                      fontweight="bold", fontfamily="monospace", pad=8)
@@ -753,7 +758,10 @@ class MissionControlGUI:
                         alpha=0.06, color=EVENT_COLS[ev_idx])
 
         ax2.set_ylabel("Temp °C", fontsize=7, color=FG_SECONDARY)
-        ax2.set_xlabel("Time step", fontsize=7, color=FG_SECONDARY)
+        ticks = np.linspace(0, eng.T_STEPS - 1, 5, dtype=int)
+        ax2.set_xticks(ticks)
+        ax2.set_xticklabels([time_label(x, eng.T_STEPS) for x in ticks], fontsize=6)
+        ax2.set_xlabel("Time of day", fontsize=7, color=FG_SECONDARY)
         ax2.set_xlim(0, eng.T_STEPS-1)
 
         self.canvas_ts.draw_idle()
@@ -773,7 +781,10 @@ class MissionControlGUI:
         ax.set_yticks(range(self.engine.N_NODES))
         ax.set_yticklabels([f"N{i}" for i in range(self.engine.N_NODES)],
                            fontsize=5.5)
-        ax.set_xlabel("Time step", fontsize=6)
+        ticks = np.linspace(0, self.engine.T_STEPS - 1, 5, dtype=int)
+        ax.set_xticks(ticks)
+        ax.set_xticklabels([time_label(x, self.engine.T_STEPS) for x in ticks], fontsize=5.5)
+        ax.set_xlabel("Time of day", fontsize=6)
         ax.set_title("All nodes × time", color=FG_SECONDARY,
                      fontsize=7, fontfamily="monospace", pad=3)
 
@@ -806,7 +817,7 @@ class MissionControlGUI:
         else:
             self.status_badge.config(text="● STABLE", fg=ACCENT_TEAL)
 
-        self.lbl_node.config(text=f"Inspecting: N{sn}  @  t={t}")
+        self.lbl_node.config(text=f"Inspecting: N{sn}  @  {time_label(t, eng.T_STEPS)}")
 
     def _update_alerts(self, t):
         eng = self.engine
@@ -818,7 +829,7 @@ class MissionControlGUI:
             lbl_now  = eng.label[i, t]
             lbl_prev = eng.label[i, max(0, t-1)]
             if lbl_now != lbl_prev:
-                ts_str = f"t={t:03d}"
+                ts_str = time_label(t, eng.T_STEPS)
                 if lbl_now == 2:
                     msg = f"[{ts_str}] ▲ N{i} → HIGH UNSTABLE  GMS={eng.gms[i,t]:.2f}\n"
                     txt.insert("1.0", msg, "high")
