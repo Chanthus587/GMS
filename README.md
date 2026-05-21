@@ -1,308 +1,238 @@
-# GMS: Gradient-Momentum Score Microclimate Instability Detection System
+# GMS Mission Control: Microclimate Anomaly Detection and Climate Sensor Network Dashboard
 
-A sophisticated machine learning system for detecting microclimate thermal instabilities using a network of distributed sensor nodes. The system leverages spatial-temporal analysis to identify anomalous temperature patterns in real-time.
+GMS Mission Control is a Python and Flask application for detecting microclimate instability, thermal anomalies, and sensor-network events in real time. It combines a Gradient-Momentum Score model with spatial-temporal analysis, NASA POWER climate data support, interactive dashboards, anomaly alerts, geospatial visualizations, and optimization tools for climate monitoring research.
 
-## 🎯 Overview
+## Topics And Keywords
 
-The **Gradient-Momentum Score (GMS)** model combines four key components to detect microclimate instabilities:
+`microclimate` `anomaly-detection` `climate-tech` `climate-data` `sensor-network` `iot-sensors` `environmental-monitoring` `thermal-instability` `spatial-temporal-analysis` `machine-learning` `flask` `python` `data-visualization` `nasa-power-api` `dashboard` `optimization`
 
-1. **Spatial Gradient (ΔT)** - Temperature differences between neighboring nodes
-2. **Temporal Momentum (M)** - Rate of change in temperature gradients over time
-3. **Duration/Persistence (D)** - How long instability persists at a location
-4. **Neighbor Influence Score (NIS)** - Anomaly propagation through the sensor network
+## Overview
+
+The **Gradient-Momentum Score (GMS)** model detects microclimate instability by combining four signals from a distributed temperature and humidity sensor network:
+
+1. **Spatial Gradient (Delta T)** - temperature differences between neighboring nodes.
+2. **Temporal Momentum (M)** - rate of change in temperature gradients over time.
+3. **Duration/Persistence (D)** - how long instability persists at a location.
+4. **Neighbor Influence Score (NIS)** - anomaly propagation through the sensor network.
 
 The composite GMS score classifies each sensor location into three stability states:
-- **Stable** - Normal microclimate conditions
-- **Moderately Unstable** - Emerging temperature anomalies
-- **Highly Unstable** - Critical instability events
 
-## ✨ Key Features
+- **Stable** - normal microclimate conditions.
+- **Moderately Unstable** - emerging temperature anomalies.
+- **Highly Unstable** - critical instability events.
 
-- **40-Node Sensor Network** - Distributed temperature and humidity monitoring
-- **Real-time Anomaly Detection** - Dynamic classification of instability events
-- **Web-based Dashboard** - Interactive Mission Control interface at `http://localhost:5000`
-- **Multi-baseline Support** - Configurable absolute temperature thresholds
-- **Noise Tolerance** - Toggle-able noise injection for robustness testing
-- **NASA POWER API Integration** - Real-world climate data from satellite measurements
-- **Comprehensive Visualization** - Spatial plots, time-series analysis, and network graphs
-- **Metric Evaluation** - Precision, recall, and F1-score calculations
+## Key Features
 
-## 📊 Project Structure
+- **40-node sensor network** for distributed temperature and humidity monitoring.
+- **Real-time anomaly detection** with dynamic instability classification.
+- **Flask web dashboard** with Mission Control views at `http://localhost:5000`.
+- **Interactive climate visualizations** including maps, heatmaps, timelines, alerts, and analysis charts.
+- **NASA POWER API integration** for real-world climate and weather data.
+- **Spatial-temporal GMS algorithm** for thermal anomaly and instability detection.
+- **Hyperparameter optimizer** for weights, thresholds, and duration-window tuning.
+- **Evaluation metrics** including accuracy, precision, recall, F1-score, and false alarm rate.
+- **CLI and desktop GUI entry points** for research workflows and local experimentation.
 
-```
+## Project Structure
+
+```text
 gms_project/
-├── app.py                    # Flask web interface (Mission Control)
-├── main.py                   # CLI entry point
-├── backend/                  # Web backend: engine, routes, optimizer
-├── frontend/                 # Web templates and static assets
-├── config/                   # Configuration package
-├── requirements.txt          # Python dependencies
-│
-├── core/
-│   ├── gms_model.py         # Core GMS algorithm implementation
-│   └── __init__.py
-│
-├── data/
-│   ├── loader.py            # Data loading (simulated & NASA)
-│   ├── nasa_cache.csv       # Cached NASA POWER API data
-│   └── __init__.py
-│
-├── visualization/
-│   ├── plots.py             # Matplotlib visualizations
-│   └── __init__.py
-│
-├── evaluation/
-│   ├── metrics.py           # Performance metrics (precision, recall, F1)
-│   └── __init__.py
-│
-├── tests/
-│   ├── test_gms.py          # Unit tests
-│   └── __init__.py
-│
-├── outputs/
-│   ├── gms_clean.csv        # Clean temperature data
-│   ├── gms_noise.csv        # Noisy temperature data
-│   └── plots/               # Generated visualizations
-│
-└── gui_mission_control.py   # Interactive GUI launcher
+|-- app.py                    # Flask web interface
+|-- main.py                   # CLI entry point
+|-- gui_mission_control.py    # Desktop GUI launcher
+|-- requirements.txt          # Python dependencies
+|-- README.md
+|-- PROJECT_STRUCTURE.md
+|
+|-- backend/                  # Web backend: engine, routes, optimizer
+|-- frontend/                 # Templates, CSS, and JavaScript assets
+|-- config/                   # Application settings
+|-- core/                     # Core GMS algorithm
+|-- data/                     # Data loading and cached climate data
+|-- evaluation/               # Metric calculations
+|-- tests/                    # Unit tests
+|-- utils/                    # Shared helpers
+|-- visualization/            # Plotting utilities
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
+
 - Python 3.8+
-- pip (Python package manager)
+- pip
 
 ### Installation
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd gms_project
-
-# Create virtual environment
+git clone https://github.com/Chanthus587/GMS.git
+cd GMS
 python -m venv venv
-source venv/Scripts/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
+venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Usage
+### Run The Web Dashboard
 
-#### 1. Web Dashboard (Recommended)
 ```bash
 python app.py
 ```
-Open your browser and navigate to **http://localhost:5000**
-- Real-time sensor network visualization
-- Interactive event timeline
-- Temperature heatmap and anomaly alerts
-- Configurable noise and weight parameters
 
-#### 2. Command-line Interface
+Open `http://localhost:5000` in your browser.
+
+The dashboard includes:
+
+- Real-time sensor network visualization.
+- Interactive event timeline.
+- Temperature heatmaps and anomaly alerts.
+- Configurable noise, baseline, and GMS weight parameters.
+- Optimization controls for model tuning.
+
+### Run The CLI Pipeline
+
 ```bash
 python main.py
 ```
-- Load and analyze simulated or real NASA data
-- Generate evaluation metrics
-- Export results to CSV
 
-#### 3. GUI Mission Control
+Use the CLI to load simulated or NASA climate data, run GMS analysis, calculate metrics, and export results.
+
+### Run The Desktop GUI
+
 ```bash
 python gui_mission_control.py
 ```
-- Standalone desktop interface for advanced analysis
 
-## 🔧 Configuration
+## Configuration
 
-Edit `config/settings.py` for the web app and 40-node Mission Control defaults.
-The `config` package also exposes legacy names used by the CLI/core pipeline.
+Edit `config/settings.py` for the web app and 40-node Mission Control defaults. The `config` package also exposes legacy names used by the CLI and core pipeline.
 
 ```python
 # Network topology
-n_nodes = 40              # Number of sensor nodes
-grid_size = 10.0          # Coverage area (km²)
-neighbor_radius = 2.8     # Neighborhood detection radius
+n_nodes = 40
+grid_size = 10.0
+neighbor_radius = 2.8
 
-# Algorithm weights (must sum to 1.0)
-w1 = 0.35  # Spatial Gradient weight
-w2 = 0.25  # Temporal Momentum weight
-w3 = 0.20  # Neighbor Influence weight
-w4 = 0.20  # Duration/Persistence weight
+# Algorithm weights; must sum to 1.0
+w1 = 0.35  # Spatial Gradient
+w2 = 0.25  # Temporal Momentum
+w3 = 0.20  # Neighbor Influence
+w4 = 0.20  # Duration/Persistence
 
 # Thresholds
-alpha = 0.30  # Stable → Moderately Unstable
-beta = 0.60   # Moderately Unstable → Highly Unstable
-
-# Simulated events (for testing)
-EVENTS = [
-    dict(nodes=[0,1,2,3,4], t_start=20, t_end=55, delta_T=8.0, label="Event A"),
-    # ... more events
-]
+alpha = 0.30  # Stable to Moderately Unstable
+beta = 0.60   # Moderately Unstable to Highly Unstable
 ```
 
-## 📈 Algorithm Details
+## Algorithm Details
 
-### Spatial Gradient (Component 1)
-```
-ΔT_ij(t) = T_i(t) − T_j(t)
-```
-Computes mean temperature difference between a node and its neighbors, detecting spatial anomalies.
+### Spatial Gradient
 
-### Temporal Momentum (Component 2)
+```text
+DeltaT_ij(t) = T_i(t) - T_j(t)
 ```
-M_ij(t) = ΔT(t) − ΔT(t−1)
-```
-Captures rate of change in spatial gradients, identifying rapid temperature shifts.
 
-### Duration/Persistence (Component 3)
-```
-D_i(t) = fraction of time steps in sliding window where |ΔT| > θ
-```
-Measures how long instability persists, distinguishing transient from sustained anomalies.
+Computes mean temperature difference between a node and its neighbors to detect spatial anomalies.
 
-### Neighbor Influence Score (Component 4)
+### Temporal Momentum
+
+```text
+M_ij(t) = DeltaT(t) - DeltaT(t-1)
 ```
+
+Captures rapid changes in spatial gradients.
+
+### Duration/Persistence
+
+```text
+D_i(t) = fraction of time steps in a sliding window where |DeltaT| > theta
+```
+
+Distinguishes transient noise from sustained microclimate instability.
+
+### Neighbor Influence Score
+
+```text
 NIS_i(t) = weighted sum of anomalies in neighboring nodes
 ```
-Propagates anomaly signals through the network topology.
+
+Models how anomaly signals propagate through the sensor network.
 
 ### Composite GMS Score
+
+```text
+GMS_i(t) = w1*G2 + w2*M + w3*NIS + w4*D
 ```
-GMS_i(t) = w1·G2 + w2·M + w3·NIS + w4·D
-```
-Weighted combination normalized to [0, 1] range.
 
-## 📦 Dependencies
+The weighted score is normalized to the `[0, 1]` range and mapped to stability states.
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `numpy` | ≥1.24.0 | Numerical computations |
-| `pandas` | ≥2.0.0 | Data manipulation |
-| `scipy` | ≥1.10.0 | Scientific computing |
-| `scikit-learn` | ≥1.3.0 | Machine learning utilities |
-| `matplotlib` | ≥3.7.0 | Visualization |
-| `networkx` | ≥3.1 | Network analysis |
-| `requests` | ≥2.31.0 | HTTP API calls (NASA POWER) |
+## Dependencies
 
-## 🧪 Testing
+| Package | Purpose |
+|---------|---------|
+| `numpy` | Numerical computation |
+| `pandas` | Data manipulation |
+| `scipy` | Scientific computing |
+| `scikit-learn` | Machine learning utilities |
+| `matplotlib` | Plotting and visualization |
+| `networkx` | Sensor network analysis |
+| `requests` | NASA POWER API calls |
+| `flask` | Web dashboard and API |
+
+## Testing
 
 ```bash
-python tests/test_gms.py
+python -m pytest
 ```
 
-## 📊 Data Sources
+## Data Sources
 
-### Simulated Data (Default)
-- Synthetic temperature and humidity time series
-- Embedded thermal events (A, B, C, D)
-- Configurable noise levels
+### Simulated Data
 
-### NASA POWER API (Real Data)
-- Satellite-derived 2-meter air temperature (T2M)
-- Relative humidity at 2 meters (RH2M)
-- Daily aggregated values
-- Geographic coordinates (latitude/longitude) configurable
+- Synthetic temperature and humidity time series.
+- Embedded thermal events for controlled testing.
+- Configurable noise and instability patterns.
 
-## 🤖 Hyperparameter Optimizer
+### NASA POWER API
 
-The optimizer can tune component weights, thresholds, and the duration window from the web UI or Flask API.
+- Satellite-derived 2-meter air temperature (`T2M`).
+- Relative humidity at 2 meters (`RH2M`).
+- Daily climate measurements by latitude and longitude.
+
+## Hyperparameter Optimizer
+
+The optimizer tunes component weights, thresholds, and the duration window from the web UI or Flask API.
 
 ```bash
-# Start web server
-python app.py
-
-# Call optimization endpoint
 curl -X POST http://localhost:5000/api/optimize \
   -H "Content-Type: application/json" \
-  -d '{"iterations": 50, "seed": 42, "target_recall": 0.70, "target_fp_rate": 0.05}'
-
-# Apply optimized parameters
-curl -X POST http://localhost:5000/api/apply_optimized_params \
-  -H "Content-Type: application/json" \
-  -d '{"params": {"w1": 0.3842, "w2": 0.2156, "w3": 0.2001, "w4": 0.1901, ...}}'
+  -d "{\"iterations\": 50, \"seed\": 42, \"target_recall\": 0.70, \"target_fp_rate\": 0.05}"
 ```
 
-### Optimization Objective
+The optimizer evaluates accuracy, precision, recall, F1-score, and false alarm rate to reduce unnecessary alerts while preserving useful anomaly detection.
 
-The optimizer minimizes a weighted loss function:
+## Who This Project Is For
 
-```
-Loss = -λ_acc·Accuracy + λ_recall·max(0, Recall - Target) + λ_fp·FAR
-```
+This project is useful for students, researchers, and developers working on:
 
-Where:
-- **λ_acc = 1.0** — Maximize accuracy
-- **λ_recall = 0.5** — Penalize high recall (more conservative)
-- **λ_fp = 2.0** — Heavily penalize false positive rate
+- Climate monitoring and environmental sensing.
+- IoT sensor networks.
+- Thermal anomaly detection.
+- Spatial-temporal machine learning.
+- Real-time Flask dashboards.
+- Data visualization for weather and climate systems.
 
-### Performance Metrics Explained
+## Contributing
 
-| Metric | Definition | Target |
-|--------|-----------|--------|
-| **Accuracy** | (TP+TN) / Total | Maximize |
-| **Precision** | TP / (TP+FP) | High (fewer false alarms) |
-| **Recall** | TP / (TP+FN) | Lower = more conservative |
-| **FAR** | FP / (FP+TN) | Minimize |
-| **F1-Score** | 2·Precision·Recall / (Precision+Recall) | Balance |
+Contributions are welcome. Good areas for improvement include additional anomaly detection models, real-time streaming integrations, map enhancements, performance tuning, and broader climate data support.
 
-### Example Output
+## License
 
-```
-======================================================================
-OPTIMIZATION RESULTS
-======================================================================
+Add a license before using this project in production or publishing derivative work.
 
-📊 BEST PARAMETERS FOUND:
-  Weights:
-    w1 (Gradient)    : 0.3842
-    w2 (Momentum)    : 0.2156
-    w3 (NIS)         : 0.2001
-    w4 (Duration)    : 0.1901
-  Thresholds:
-    theta            : 1.1234
-    alpha (Mod)      : 0.2891
-    beta  (High)     : 0.7234
-    window           : 8
+## Contact
 
-📈 PERFORMANCE METRICS:
-  Accuracy  : 0.8934 ✓
-  Precision : 0.8712
-  Recall    : 0.6543 (Lower = fewer alarms)
-  FAR       : 0.0234 (Lower = fewer false alarms)
-  F1-Score  : 0.7523
-
-🎯 DETECTION COUNTS:
-  True Positives  (TP) : 485
-  False Positives (FP) : 21  ← False alarms
-  False Negatives (FN) : 251
-  True Negatives  (TN) : 3243
-```
-
-## 📈 Output Files
-
-- **gms_clean.csv** - Clean temperature readings without noise
-- **gms_noise.csv** - Temperature data with injected noise
-- **plots/** - Generated visualizations (heatmaps, time series, network graphs)
-
-## 🤝 Contributing
-
-Contributions are welcome! Areas of interest:
-
-- Additional anomaly detection algorithms
-- Real-time data streaming support
-- Advanced visualization features
-- Performance optimizations for large networks
-
-## 📝 License
-
-[Add your license here - MIT, Apache 2.0, etc.]
-
-## 📧 Contact
-
-For questions or suggestions, open an issue or contact the development team.
+For questions or suggestions, open an issue on GitHub.
 
 ---
 
-**Last Updated:** April 2026 | **Version:** 2.0
+**Version:** 2.0 | **Last Updated:** April 2026
